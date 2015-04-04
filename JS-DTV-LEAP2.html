@@ -11,6 +11,7 @@
 // Store frame for motion functions
 var previousFrame = null;
 var lasttype = "";
+var lastrun = new Date().getTime();
 
 // Setup Leap loop with frame callback function
 var controllerOptions = {enableGestures: true};
@@ -30,12 +31,13 @@ function checkIfCircled( frame ) {
   if (frame.gestures.length > 0) {
     var gesture = frame.gestures[0];
     var mygetrequest=new XMLHttpRequest();
-    if (gesture.type == "circle" && lasttype != "circle") {
+    if (gesture.type == "circle" ) {
+      var currenttime = new Date().getTime();
+      if ((currenttime - lastrun) > 1000) {
           mygetrequest.open("GET", "http://10.121.1.67:8080/remote/processKey?key=pause", true);
           mygetrequest.send(null);
-          lasttype="circle";
-    } else if (lasttype == "circle") {
-      setTimeout(clearType, 6000);
+          lastrun = currenttime;
+      }
     }
   }
 }
