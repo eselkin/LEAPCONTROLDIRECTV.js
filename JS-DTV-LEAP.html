@@ -1,29 +1,12 @@
 <!DOCTYPE html>
-<!--
-/------------------------------------------------------------------------------\
-| Copyright (C) 2012-2013 Leap Motion, Inc. All rights reserved.               |
-| Leap Motion proprietary and confidential. Not for distribution.              |
-| Use subject to the terms of the Leap Motion SDK Agreement available at       |
-| https://developer.leapmotion.com/sdk_agreement, or another agreement         |
-| between Leap Motion and you, your company or other organization.             |
-\------------------------------------------------------------------------------/
--->
-
-<!--
-
-See additional libraries, guides, and examples at:
-
- - https://developer.leapmotion.com/downloads/javascript
- - https://developer.leapmotion.com/getting-started/javascript
- - https://developer.leapmotion.com/gallery/tags/javascript
-
--->
 
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>Leap Motion JavaScript Sample</title>
 <script src="http://js.leapmotion.com/leap-0.6.4.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+
 <script>
 // Store frame for motion functions
 var previousFrame = null;
@@ -31,82 +14,39 @@ var paused = false;
 var pauseOnGesture = false;
 var play = false;
 
+
 // Setup Leap loop with frame callback function
 var controllerOptions = {enableGestures: true};
 
-// to use HMD mode:
-// controllerOptions.optimizeHMD = true;
-
-function ajaxRequest(){
- var activexmodes=["Msxml2.XMLHTTP", "Microsoft.XMLHTTP"]; //activeX versions to check for in IE
- if (window.ActiveXObject){ //Test for support for ActiveXObject in IE first (as XMLHttpRequest in IE7 is broken)
-  for (var i=0; i<activexmodes.length; i++){
-   try{
-    return new ActiveXObject(activexmodes[i]);
-   }
-   catch(e){
-    //suppress error
-   }
-  }
- }
- else if (window.XMLHttpRequest) // if Mozilla, Safari etc
-  return new XMLHttpRequest();
- else
-  return false;
-}
-
 
 Leap.loop(controllerOptions, function(frame) {
-  if (paused) {
-    return; // Skip this update
-  }
 
   if (frame.gestures.length > 0) {
-    if (pauseOnGesture) {
-      togglePause();
-    }
     var gesture = frame.gestures[0];
-    var mygetrequest=new ajaxRequest();
+    var mygetrequest=new XMLHttpRequest();
     console.log("Caught a gesture");
     
-    switch (gesture.type) {
-      case "circle":
+    if (gesture.type == "circle") {
+
           console.log("Caught a circle gesture");
           mygetrequest.open("GET", "http://10.121.1.67:8080/remote/processKey?key=pause", true);
           mygetrequest.send(null);
-        break;
-      default:
-        console.log("Caught some other gesture");
     }
   }
-  else {
-  }
+});
 
-  // Store frame for motion functions
-  previousFrame = frame;
-})
-
-function vectorToString(vector, digits) {
-  if (typeof digits === "undefined") {
-    digits = 1;
-  }
-  return "(" + vector[0].toFixed(digits) + ", "
-             + vector[1].toFixed(digits) + ", "
-             + vector[2].toFixed(digits) + ")";
-}
 
 function togglePause() {
   paused = !paused;
-
   if (paused) {
-    document.getElementById("pause").innerText = "Resume";
+    $("#pause").html("Resume");
   } else {
-    document.getElementById("pause").innerText = "Pause";
+    $("#pause").html("Pause");
   }
 }
 
 function pauseForGestures() {
-  if (document.getElementById("pauseOnGesture").checked) {
+  if ($("#pauseOnGesture").checked) {
     pauseOnGesture = true;
   } else {
     pauseOnGesture = false;
@@ -114,6 +54,7 @@ function pauseForGestures() {
 }
 
 </script>
+
 </head>
 <body>
 <h1>Leap Motion JavaScript Sample</h1>
