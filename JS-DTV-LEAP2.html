@@ -17,7 +17,9 @@ var controllerOptions = {enableGestures: true};
 
 
 Leap.loop(controllerOptions, function(frame) {
-  canISignal(frame);
+  if (previousFrame == undefined)
+    previousFrame = frame;
+  canISignal(frame, previousFrame);
 });
 
 function countPointing (myPointables){
@@ -27,7 +29,7 @@ function countPointing (myPointables){
 }
 
 
-function canISignal( frame ) {
+function canISignal( frame , previous ) {
   if (frame.gestures.length > 0) {
     var currenttime = new Date().getTime();
     var gesture = frame.gestures[0];
@@ -60,9 +62,11 @@ function canISignal( frame ) {
           break;
         case "circle":
           $("#gestureData").html("CIRCLE");
-          // test direction
-          mygetrequest.open("GET", "http://10.121.1.67:8080/remote/processKey?key=pause", true);
-          mygetrequest.send(null);
+          // test direction 
+          var dirAngle = frame.rotationAngle(previous);
+          console.log("dir: "+ (dirAngle*180/Math.PI));
+          //mygetrequest.open("GET", "http://10.121.1.67:8080/remote/processKey?key=pause", true);
+          //mygetrequest.send(null);
           lastrun = currenttime; // only set on a successful run
           break;         
         default:
