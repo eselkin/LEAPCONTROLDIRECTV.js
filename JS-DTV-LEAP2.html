@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Leap Motion JavaScript Sample</title>
+<script src="http://js.leapmotion.com/leap-0.6.4.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+
+<script>
+// Store frame for motion functions
+var previousFrame = null;
+var lasttype = "";
+
+// Setup Leap loop with frame callback function
+var controllerOptions = {enableGestures: true};
+
+
+Leap.loop(controllerOptions, function(frame) {
+  checkIfCircled(frame);
+});
+
+
+function clearType ()
+{
+  lasttype = "";
+}
+
+function checkIfCircled( frame ) {
+  if (frame.gestures.length > 0) {
+    var gesture = frame.gestures[0];
+    var mygetrequest=new XMLHttpRequest();
+    if (gesture.type == "circle" && lasttype != "circle") {
+          mygetrequest.open("GET", "http://10.121.1.67:8080/remote/processKey?key=pause", true);
+          mygetrequest.send(null);
+          lasttype="circle";
+    } else if (lasttype == "circle") {
+      setTimeout(clearType, 6000);
+    }
+  }
+}
+
+</script>
+
+</head>
+<body>
+<h1>Leap Motion JavaScript Sample</h1>
+<div id="main">
+  <h3>Frame data:</h3>
+  <div id="frameData"></div>
+  <div style="clear:both;"></div>
+  <h3>Hand data:</h3>
+  <div id="handData"></div>
+  <div style="clear:both;"></div>
+  <h3>Finger and tool data:</h3>
+  <div id="pointableData"></div>
+  <div style="clear:both;"></div>
+  <h3>Gesture data:</h3>
+  <div id="gestureData"></div>
+</div>
+</body>
+</html>
