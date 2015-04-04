@@ -29,6 +29,7 @@ See additional libraries, guides, and examples at:
 var previousFrame = null;
 var paused = false;
 var pauseOnGesture = false;
+var play = false;
 
 // Setup Leap loop with frame callback function
 var controllerOptions = {enableGestures: true};
@@ -36,195 +37,50 @@ var controllerOptions = {enableGestures: true};
 // to use HMD mode:
 // controllerOptions.optimizeHMD = true;
 
+function ajaxRequest(){
+ var activexmodes=["Msxml2.XMLHTTP", "Microsoft.XMLHTTP"]; //activeX versions to check for in IE
+ if (window.ActiveXObject){ //Test for support for ActiveXObject in IE first (as XMLHttpRequest in IE7 is broken)
+  for (var i=0; i<activexmodes.length; i++){
+   try{
+    return new ActiveXObject(activexmodes[i]);
+   }
+   catch(e){
+    //suppress error
+   }
+  }
+ }
+ else if (window.XMLHttpRequest) // if Mozilla, Safari etc
+  return new XMLHttpRequest();
+ else
+  return false;
+}
+
+
 Leap.loop(controllerOptions, function(frame) {
   if (paused) {
     return; // Skip this update
   }
 
-  // Display Frame object data
-  var frameOutput = document.getElementById("frameData");
-
-  var frameString = "Frame ID: " + frame.id  + "<br />"
-                  + "Timestamp: " + frame.timestamp + " &micro;s<br />"
-                  + "Hands: " + frame.hands.length + "<br />"
-                  + "Fingers: " + frame.fingers.length + "<br />"
-                  + "Tools: " + frame.tools.length + "<br />"
-                  + "Gestures: " + frame.gestures.length + "<br />";
-
-  // Frame motion factors
-  if (previousFrame && previousFrame.valid) {
-    var translation = frame.translation(previousFrame);
-    frameString += "Translation: " + vectorToString(translation) + " mm <br />";
-
-    var rotationAxis = frame.rotationAxis(previousFrame);
-    var rotationAngle = frame.rotationAngle(previousFrame);
-    frameString += "Rotation axis: " + vectorToString(rotationAxis, 2) + "<br />";
-    frameString += "Rotation angle: " + rotationAngle.toFixed(2) + " radians<br />";
-
-    var scaleFactor = frame.scaleFactor(previousFrame);
-    frameString += "Scale factor: " + scaleFactor.toFixed(2) + "<br />";
-  }
-  frameOutput.innerHTML = "<div style='width:300px; float:left; padding:5px'>" + frameString + "</div>";
-
-  // Display Hand object data
-  var handOutput = document.getElementById("handData");
-  var handString = "";
-  if (frame.hands.length > 0) {
-    for (var i = 0; i < frame.hands.length; i++) {
-      var hand = frame.hands[i];
-
-      handString += "<div style='width:300px; float:left; padding:5px'>";
-      handString += "Hand ID: " + hand.id + "<br />";
-      handString += "Type: " + hand.type + " hand" + "<br />";
-      handString += "Direction: " + vectorToString(hand.direction, 2) + "<br />";
-      handString += "Palm position: " + vectorToString(hand.palmPosition) + " mm<br />";
-      handString += "Grab strength: " + hand.grabStrength + "<br />";
-      handString += "Pinch strength: " + hand.pinchStrength + "<br />";
-      handString += "Confidence: " + hand.confidence + "<br />";
-      handString += "Arm direction: " + vectorToString(hand.arm.direction()) + "<br />";
-      handString += "Arm center: " + vectorToString(hand.arm.center()) + "<br />";
-      handString += "Arm up vector: " + vectorToString(hand.arm.basis[1]) + "<br />";
-
-      // Hand motion factors
-      if (previousFrame && previousFrame.valid) {
-        var translation = hand.translation(previousFrame);
-        handString += "Translation: " + vectorToString(translation) + " mm<br />";
-
-        var rotationAxis = hand.rotationAxis(previousFrame, 2);
-        var rotationAngle = hand.rotationAngle(previousFrame);
-        handString += "Rotation axis: " + vectorToString(rotationAxis) + "<br />";
-        handString += "Rotation angle: " + rotationAngle.toFixed(2) + " radians<br />";
-
-        var scaleFactor = hand.scaleFactor(previousFrame);
-        handString += "Scale factor: " + scaleFactor.toFixed(2) + "<br />";
-      }
-
-      // IDs of pointables associated with this hand
-      if (hand.pointables.length > 0) {
-        var fingerIds = [];
-        for (var j = 0; j < hand.pointables.length; j++) {
-          var pointable = hand.pointables[j];
-            fingerIds.push(pointable.id);
-        }
-        if (fingerIds.length > 0) {
-          handString += "Fingers IDs: " + fingerIds.join(", ") + "<br />";
-        }
-      }
-
-      handString += "</div>";
-    }
-  }
-  else {
-    handString += "No hands";
-  }
-  handOutput.innerHTML = handString;
-
-  // Display Pointable (finger and tool) object data
-  var pointableOutput = document.getElementById("pointableData");
-  var pointableString = "";
-  if (frame.pointables.length > 0) {
-    var fingerTypeMap = ["Thumb", "Index finger", "Middle finger", "Ring finger", "Pinky finger"];
-    var boneTypeMap = ["Metacarpal", "Proximal phalanx", "Intermediate phalanx", "Distal phalanx"];
-    for (var i = 0; i < frame.pointables.length; i++) {
-      var pointable = frame.pointables[i];
-
-      pointableString += "<div style='width:250px; float:left; padding:5px'>";
-
-      if (pointable.tool) {
-        pointableString += "Pointable ID: " + pointable.id + "<br />";
-        pointableString += "Classified as a tool <br />";
-        pointableString += "Length: " + pointable.length.toFixed(1) + " mm<br />";
-        pointableString += "Width: "  + pointable.width.toFixed(1) + " mm<br />";
-        pointableString += "Direction: " + vectorToString(pointable.direction, 2) + "<br />";
-        pointableString += "Tip position: " + vectorToString(pointable.tipPosition) + " mm<br />"
-        pointableString += "</div>";
-      }
-      else {
-        pointableString += "Pointable ID: " + pointable.id + "<br />";
-        pointableString += "Type: " + fingerTypeMap[pointable.type] + "<br />";
-        pointableString += "Belongs to hand with ID: " + pointable.handId + "<br />";
-        pointableString += "Classified as a finger<br />";
-        pointableString += "Length: " + pointable.length.toFixed(1) + " mm<br />";
-        pointableString += "Width: "  + pointable.width.toFixed(1) + " mm<br />";
-        pointableString += "Direction: " + vectorToString(pointable.direction, 2) + "<br />";
-        pointableString += "Extended?: "  + pointable.extended + "<br />";
-        pointable.bones.forEach( function(bone){
-          pointableString += boneTypeMap[bone.type] + " bone <br />";
-          pointableString += "Center: " + vectorToString(bone.center()) + "<br />";
-          pointableString += "Direction: " + vectorToString(bone.direction()) + "<br />";
-          pointableString += "Up vector: " + vectorToString(bone.basis[1]) + "<br />";
-        });
-        pointableString += "Tip position: " + vectorToString(pointable.tipPosition) + " mm<br />";
-        pointableString += "</div>";
-      }
-    }
-  }
-  else {
-    pointableString += "<div>No pointables</div>";
-  }
-  pointableOutput.innerHTML = pointableString;
-
-
-
-
-  function ajaxRequest(){
-   var activexmodes=["Msxml2.XMLHTTP", "Microsoft.XMLHTTP"]; //activeX versions to check for in IE
-   if (window.ActiveXObject){ //Test for support for ActiveXObject in IE first (as XMLHttpRequest in IE7 is broken)
-    for (var i=0; i<activexmodes.length; i++){
-     try{
-      return new ActiveXObject(activexmodes[i]);
-     }
-     catch(e){
-      //suppress error
-     }
-    }
-   }
-   else if (window.XMLHttpRequest) // if Mozilla, Safari etc
-    return new XMLHttpRequest();
-   else
-    return false;
-  }
-  // Display Gesture object data
-  var gestureOutput = document.getElementById("gestureData");
-  var gestureString = "";
-  var play = false;
-  
   if (frame.gestures.length > 0) {
     if (pauseOnGesture) {
       togglePause();
     }
-    for (var i = 0; i < frame.gestures.length; i++) {
-      var gesture = frame.gestures[i];
-      var mygetrequest=new ajaxRequest();
-      gestureString += "Gesture ID: " + gesture.id + ", "
-                    + "type: " + gesture.type + ", "
-                    + "state: " + gesture.state + ", "
-                    + "hand IDs: " + gesture.handIds.join(", ") + ", "
-                    + "pointable IDs: " + gesture.pointableIds.join(", ") + ", "
-                    + "duration: " + gesture.duration + " &micro;s, ";
-
-      switch (gesture.type) {
-        case "circle":
-        if (play) {
+    var gesture = frame.gestures[0];
+    var mygetrequest=new ajaxRequest();
+    console.log("Caught a gesture");
+    
+    switch (gesture.type) {
+      case "circle":
+          console.log("Caught a circle gesture");
           mygetrequest.open("GET", "http://10.121.1.67:8080/remote/processKey?key=pause", true);
           mygetrequest.send(null);
-        } else {
-          mygetrequest.open("GET", "http://10.121.1.67:8080/remote/processKey?key=play", true);
-          mygetrequest.send(null);          
-        }
-          console.log("HERE IN GET");
-          play = !play;
-          break;
-        default:
-          gestureString += "unkown gesture type";
-      }
-      gestureString += "<br />";
+        break;
+      default:
+        console.log("Caught some other gesture");
     }
   }
   else {
-    gestureString += "No gestures";
   }
-  gestureOutput.innerHTML = gestureString;
 
   // Store frame for motion functions
   previousFrame = frame;
