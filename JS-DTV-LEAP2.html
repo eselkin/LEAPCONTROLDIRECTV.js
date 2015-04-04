@@ -64,7 +64,7 @@ function canISignal( frame , previous ) {
           $("#gestureData").html("CIRCLE");
           // test direction 
           var dirAngle = frame.rotationAngle(previous);
-          console.log("dir: "+ (dirAngle*180/Math.PI));
+          console.log("dir: "+ (dirAngle*180/Math.PI)); // CIRCLE DEGREES MAKE NO SENSE!!!!!
           //mygetrequest.open("GET", "http://10.121.1.67:8080/remote/processKey?key=pause", true);
           //mygetrequest.send(null);
           lastrun = currenttime; // only set on a successful run
