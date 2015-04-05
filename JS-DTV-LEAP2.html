@@ -19,12 +19,14 @@ var controllerOptions = {enableGestures: true};
 Leap.loop(controllerOptions, function(frame) {
   if (previousFrame == undefined)
     previousFrame = frame;
-  canISignal(frame, previousFrame);
+  (frame.valid) && canISignal(frame, previousFrame);
 });
 
 function countPointing (myPointables){
   count = 0;
-  if (myPointables)
+  if (myPointables.length > 0)
+    for (i = myPointables.length-1; i >= 0; i--)
+        myPointables[i].extended && count++;
     return count;
 }
 
@@ -39,25 +41,25 @@ function canISignal( frame , previous ) {
       switch (gesture.type) {
         case "screenTap":
         case "keyTap":
-          var numFingers = 0;
-          if (frame.pointables.length > 0)
-          for (i = frame.pointables.length-1; i >= 0; i--)
-          {
-              aPoint = frame.pointables[i];
-              aPoint.extended && numFingers++;
-          }
+          var numFingers = countPointing(frame.pointables);
           console.log("FINGERS: "+ numFingers);
-          if (numFingers === 1) {
+          if (numFingers == 1) {
             $("#gestureData").html("KEYTAP1"); 
             mygetrequest.open("GET", "http://10.121.1.67:8080/remote/processKey?key=select", true);
             mygetrequest.send(null);
             lastrun = currenttime; // only set on a successful run
           }
-          else if (numFingers === 2) {
+          else if (numFingers >= 2 && numFingers < 5) {
             $("#gestureData").html("KEYTAP2"); 
             mygetrequest.open("GET", "http://10.121.1.67:8080/remote/processKey?key=pause", true);
             mygetrequest.send(null);
             lastrun = currenttime; // only set on a successful run
+          }
+          else  {
+            $("#gestureData").html("KEYTAP5"); 
+            mygetrequest.open("GET", "http://10.121.1.67:8080/remote/processKey?key=stop", true);
+            mygetrequest.send(null);
+            lastrun = currenttime; // only set on a successful run            
           }
           break;
         case "circle":
@@ -68,6 +70,16 @@ function canISignal( frame , previous ) {
           //mygetrequest.open("GET", "http://10.121.1.67:8080/remote/processKey?key=pause", true);
           //mygetrequest.send(null);
           lastrun = currenttime; // only set on a successful run
+          break;         
+        case "swipe":
+          var numFingers = countPointing(frame.pointables);
+          $("#gestureData").html("SWIPING");
+          // test direction 
+          if (numFingers >= 1) {
+            mygetrequest.open("GET", "http://10.121.1.67:8080/remote/processKey?key=ffwd", true);
+            mygetrequest.send(null);
+            lastrun = currenttime; // only set on a successful run
+          }
           break;         
         default:
           $("#gestureData").html("NOT");
